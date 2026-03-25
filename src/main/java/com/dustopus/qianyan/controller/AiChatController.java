@@ -1,9 +1,5 @@
 package com.dustopus.qianyan.controller;
 
-import com.dustopus.qianyan.Monitor.MonitorContext;
-import com.dustopus.qianyan.Monitor.MonitorContextHolder;
-import com.dustopus.qianyan.ai.AiChat;
-import com.dustopus.qianyan.model.dto.ChatRequest;
 import com.dustopus.qianyan.model.dto.KnowledgeRequest;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.Metadata;
@@ -14,7 +10,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,12 +17,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
+/**
+ * AI 聊天控制器（知识注入入口）
+ * 聊天接口由 StreamFluxChatController 统一提供 (/api/ai/*)
+ */
 @RestController
 @Slf4j
 public class AiChatController {
-
-    @Resource
-    private AiChat aiChat;
 
     @Resource
     private EmbeddingStoreIngestor embeddingStoreIngestor;
@@ -37,31 +33,10 @@ public class AiChatController {
 
     private final String TARGET_FILENAME = "QianYan.md";
 
-    @PostMapping("/chat")
-    public String chat(@RequestBody ChatRequest chatRequest) {
-        MonitorContextHolder.setContext(MonitorContext.builder()
-                .userId(chatRequest.getUserId())
-                .sessionId(chatRequest.getSessionId())
-                .build());
-        String chat = aiChat.chat(chatRequest.getSessionId(), chatRequest.getPrompt());
-        MonitorContextHolder.clearContext();
-        return chat;
-    }
-
-    @PostMapping("/streamChat")
-    public Flux<String> streamChat(@RequestBody ChatRequest chatRequest) {
-        MonitorContext context = MonitorContext.builder()
-                .userId(chatRequest.getUserId())
-                .sessionId(chatRequest.getSessionId())
-                .build();
-
-        return Flux.defer(() -> {
-            MonitorContextHolder.setContext(context);
-            return aiChat.streamChat(chatRequest.getSessionId(), chatRequest.getPrompt())
-                    .doFinally(signal -> MonitorContextHolder.clearContext());
-        });
-    }
-
+    /**
+     * 知识注入接口（写入文件 + 向量库）
+     * POST /api/insert
+     */
     @PostMapping("/insert")
     public String insertKnowledge(@RequestBody KnowledgeRequest knowledgeRequest) {
         // 1. 格式化内容
