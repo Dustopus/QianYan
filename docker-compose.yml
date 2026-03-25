@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # PostgreSQL + pgvector 扩展
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: qianyan-postgres
+    environment:
+      POSTGRES_DB: qianyan
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your-pgvector-password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis (分布式会话记忆)
+  redis:
+    image: redis:7-alpine
+    container_name: qianyan-redis
+    command: redis-server --requirepass your-redis-password
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "your-redis-password", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Prometheus (指标采集)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: qianyan-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./src/main/resources/system-prompt/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Grafana (可视化监控面板)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: qianyan-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  pg_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
