@@ -149,26 +149,28 @@ mvn spring-boot:run
 ### 普通对话
 
 ```bash
-POST /api/chat
+POST /api/ai/chat
 Content-Type: application/json
 
 {
-  "sessionId": 123456,
+  "memoryId": 123456,
+  "message": "你好，介绍一下你自己",
   "userId": 1001,
-  "prompt": "你好，介绍一下你自己"
+  "sessionId": 123456
 }
 ```
 
-### 流式对话
+### 流式对话 (SSE)
 
 ```bash
-POST /api/streamChat
+POST /api/ai/streamChat
 Content-Type: application/json
 
 {
-  "sessionId": 123456,
+  "memoryId": 123456,
+  "message": "写一首关于春天的诗",
   "userId": 1001,
-  "prompt": "写一首关于春天的诗"
+  "sessionId": 123456
 }
 ```
 
