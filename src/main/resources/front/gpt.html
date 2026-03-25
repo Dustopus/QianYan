@@ -237,10 +237,14 @@
             });
             if(r.ok){
                 const d = await r.json();
-                const reply = typeof d === 'string' ? d : (d.data || d.reply || JSON.stringify(d));
-                content.textContent = reply;
+                if(d.code && d.code !== 200){
+                    content.textContent = '⚠️ ' + (d.message || '请求处理异常');
+                } else {
+                    content.textContent = d.data || (typeof d === 'string' ? d : JSON.stringify(d));
+                }
             } else {
-                content.textContent = '请求失败: ' + r.status;
+                const err = await r.json().catch(() => null);
+                content.textContent = '⚠️ ' + (err && err.message ? err.message : '请求失败: ' + r.status);
             }
         } catch(e){
             content.textContent = '错误: ' + e.message;
