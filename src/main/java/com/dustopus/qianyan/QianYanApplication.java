@@ -1,4 +1,4 @@
-package com.dustopus.qiyan;
+package com.dustopus.qianyan;
 
 import dev.langchain4j.community.store.embedding.redis.spring.RedisEmbeddingStoreAutoConfiguration;
 import org.springframework.boot.SpringApplication;

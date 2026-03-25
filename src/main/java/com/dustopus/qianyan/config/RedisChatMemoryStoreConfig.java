@@ -1,4 +1,4 @@
-package com.dustopus.qiyan.config;
+package com.dustopus.qianyan.config;
 
 import dev.langchain4j.community.store.memory.chat.redis.RedisChatMemoryStore;
 import lombok.Data;

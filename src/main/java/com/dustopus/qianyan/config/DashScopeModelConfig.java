@@ -1,8 +1,8 @@
-package com.dustopus.qiyan.config;
+package com.dustopus.qianyan.config;
 
 import java.util.List;
 
-import com.dustopus.qiyan.Monitor.AiModelMonitorListener;
+import com.dustopus.qianyan.Monitor.AiModelMonitorListener;
 import dev.langchain4j.community.model.dashscope.QwenChatModel;
 import dev.langchain4j.community.model.dashscope.QwenStreamingChatModel;
 import dev.langchain4j.model.chat.ChatModel;

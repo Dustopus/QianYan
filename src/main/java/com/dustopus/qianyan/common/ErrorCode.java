@@ -1,4 +1,4 @@
-package com.dustopus.qiyan.common;
+package com.dustopus.qianyan.common;
 
 public enum ErrorCode {
     // 通用错误码 (40xxx)

@@ -1,4 +1,4 @@
-package com.dustopus.qiyan.config;
+package com.dustopus.qianyan.config;
 
 import dev.langchain4j.mcp.McpToolProvider;
 import dev.langchain4j.mcp.client.DefaultMcpClient;

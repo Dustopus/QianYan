@@ -1,10 +1,10 @@
-package com.dustopus.qiyan.controller;
+package com.dustopus.qianyan.controller;
 
-import com.dustopus.qiyan.Monitor.MonitorContext;
-import com.dustopus.qiyan.Monitor.MonitorContextHolder;
-import com.dustopus.qiyan.ai.AiChat;
-import com.dustopus.qiyan.model.dto.ChatRequest;
-import com.dustopus.qiyan.model.dto.KnowledgeRequest;
+import com.dustopus.qianyan.Monitor.MonitorContext;
+import com.dustopus.qianyan.Monitor.MonitorContextHolder;
+import com.dustopus.qianyan.ai.AiChat;
+import com.dustopus.qianyan.model.dto.ChatRequest;
+import com.dustopus.qianyan.model.dto.KnowledgeRequest;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;

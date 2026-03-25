@@ -1,9 +1,9 @@
-package com.dustopus.qiyan.ai;
+package com.dustopus.qianyan.ai;
 
-import com.dustopus.qiyan.config.McpToolConfig;
-import com.dustopus.qiyan.tool.EmailTool;
-import com.dustopus.qiyan.tool.RagTool;
-import com.dustopus.qiyan.tool.TimeTool;
+import com.dustopus.qianyan.config.McpToolConfig;
+import com.dustopus.qianyan.tool.EmailTool;
+import com.dustopus.qianyan.tool.RagTool;
+import com.dustopus.qianyan.tool.TimeTool;
 import dev.langchain4j.community.store.memory.chat.redis.RedisChatMemoryStore;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;

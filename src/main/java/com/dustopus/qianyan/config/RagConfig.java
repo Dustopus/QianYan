@@ -1,4 +1,4 @@
-package com.dustopus.qiyan.config;
+package com.dustopus.qianyan.config;
 
 import dev.langchain4j.data.document.splitter.DocumentByParagraphSplitter;
 import dev.langchain4j.data.segment.TextSegment;

@@ -1,6 +1,6 @@
-package com.dustopus.qiyan.ai;
+package com.dustopus.qianyan.ai;
 
-import com.dustopus.qiyan.guardrail.SafeInputGuardrail;
+import com.dustopus.qianyan.guardrail.SafeInputGuardrail;
 import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;

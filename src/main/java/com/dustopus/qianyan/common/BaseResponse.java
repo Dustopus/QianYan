@@ -1,4 +1,4 @@
-package com.dustopus.qiyan.common;
+package com.dustopus.qianyan.common;
 
 import java.io.Serializable;
 import lombok.Data;
