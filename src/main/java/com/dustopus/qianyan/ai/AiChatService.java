@@ -4,6 +4,7 @@ import com.dustopus.qianyan.config.McpToolConfig;
 import com.dustopus.qianyan.tool.EmailTool;
 import com.dustopus.qianyan.tool.RagTool;
 import com.dustopus.qianyan.tool.TimeTool;
+import com.dustopus.qianyan.tool.WeatherTool;
 import dev.langchain4j.community.store.memory.chat.redis.RedisChatMemoryStore;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
@@ -37,6 +38,9 @@ public class AiChatService {
     private EmailTool emailTool;
 
     @Resource
+    private WeatherTool weatherTool;
+
+    @Resource
     private StreamingChatModel streamingChatModel;
 
     @Bean
@@ -51,7 +55,7 @@ public class AiChatService {
                         .chatMemoryStore(redisChatMemoryStore)
                         .maxMessages(20)
                         .build())
-                .tools(new TimeTool(), ragTool, emailTool)
+                .tools(new TimeTool(), ragTool, emailTool, weatherTool)
                 .toolProvider(mcpToolProvider)
                 .build();
     }
