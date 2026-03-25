@@ -34,7 +34,7 @@ public class EmbeddingStoreConfig {
     public EmbeddingStore<TextSegment> initEmbeddingStore() {
         return PgVectorEmbeddingStore.builder()
                 .table(table)
-                .dropTableFirst(true)
+                .dropTableFirst(false)
                 .createTable(true)
                 .host(host)
                 .port(port)
