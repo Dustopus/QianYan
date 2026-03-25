@@ -521,10 +521,17 @@
 
             if (res.ok) {
                 const data = await res.json();
-                const reply = typeof data === 'string' ? data : (data.data || data.reply || data.message || JSON.stringify(data));
-                addMessage(reply, false);
+                // Handle BaseResponse format: {code, data, message}
+                if (data.code && data.code !== 200) {
+                    addMessage('⚠️ ' + (data.message || '请求处理异常'), false);
+                } else {
+                    const reply = data.data || (typeof data === 'string' ? data : JSON.stringify(data));
+                    addMessage(reply, false);
+                }
             } else {
-                addMessage('请求失败: ' + res.status, false);
+                const errData = await res.json().catch(() => null);
+                const errMsg = errData && errData.message ? errData.message : '请求失败: ' + res.status;
+                addMessage('⚠️ ' + errMsg, false);
             }
         } catch (e) {
             loadingDiv.remove();
