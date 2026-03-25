@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>千言·GPT 风格</title>
+    <title>千言·AI智能助手</title>
     <style>
         :root {
             --bg: #343541;
@@ -13,6 +13,17 @@
             --text: #ececf1;
             --text-dim: #8e8ea0;
             --border: #4e4f60;
+            --accent: #19c37d;
+            --danger: #ef4444;
+        }
+        [data-theme="light"] {
+            --bg: #f7f7f8;
+            --sidebar-bg: #f0f0f0;
+            --user-bg: #ffffff;
+            --ai-bg: #f7f7f8;
+            --text: #343541;
+            --text-dim: #8e8ea0;
+            --border: #e5e5e5;
             --accent: #19c37d;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -48,6 +59,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: background 0.15s;
         }
         .session-item:hover, .session-item.active { background: var(--ai-bg); color: var(--text); }
         .session-item .del-btn {
@@ -60,6 +72,25 @@
             opacity: 0.6;
         }
         .session-item:hover .del-btn { display: inline; }
+
+        .sidebar-footer {
+            padding: 8px 0 0;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 6px;
+        }
+        .sidebar-footer button {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.15s;
+        }
+        .sidebar-footer button:hover { background: var(--ai-bg); color: var(--text); }
 
         .main { flex: 1; display: flex; flex-direction: column; }
 
@@ -115,6 +146,24 @@
         }
         .mode-switch.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
+        .theme-btn {
+            position: absolute;
+            right: 32px;
+            top: -42px;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .theme-btn:hover { background: var(--ai-bg); }
+
         .input-bar {
             padding: 16px 0 24px;
             background: var(--bg);
@@ -155,150 +204,314 @@
             justify-content: center;
         }
         .input-inner .send:hover { opacity: 0.85; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: var(--accent);
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 9999;
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.error { background: var(--danger); }
     </style>
 </head>
 <body>
 <div class="app">
     <div class="sidebar">
-        <div class="new-chat" onclick="newChat()">＋ 新建对话</div>
+        <div class="new-chat" onclick="createSession()">＋ 新建对话</div>
         <div class="session-list" id="sessionList"></div>
+        <div class="sidebar-footer">
+            <button onclick="toggleTheme()" id="themeBtn">🌓 主题</button>
+            <button onclick="clearAllSessions()">🗑️ 清空</button>
+        </div>
     </div>
     <div class="main">
-        <div class="messages" id="messages">
-            <div class="msg-row ai"><div class="msg-inner"><div class="avatar ai">千</div><div>你好！我是千言 AI 助手，有什么可以帮你的？</div></div></div>
-        </div>
+        <div class="messages" id="messages"></div>
         <div class="input-bar">
             <div class="input-inner">
                 <textarea id="input" rows="1" placeholder="Send a message..." oninput="autoResize(this)"></textarea>
-                <button class="mode-switch" id="modeBtn" onclick="toggleMode()" title="切换同步/流式">同步</button>
+                <button class="mode-switch" id="modeBtn" onclick="toggleMode()" title="切换同步/流式">流式</button>
                 <button class="send" onclick="send()">➤</button>
             </div>
         </div>
     </div>
 </div>
+<div class="toast" id="toast"></div>
+
 <script>
-    let sid = 1, uid = Math.floor(Math.random()*100000)+100000, streaming = true, sending = false;
+    // ===== State =====
+    const STORAGE_KEY = 'qianyan_gpt_sessions';
     const API = '/api';
+    let userId = parseInt(localStorage.getItem('qianyan_uid') || '0') || (Math.floor(Math.random()*900000)+100000);
+    localStorage.setItem('qianyan_uid', userId);
 
-    function autoResize(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,200)+'px'; }
+    let sessions = [];
+    let activeSessionId = null;
+    let streaming = true;
+    let sending = false;
 
-    function toggleMode(){
+    // ===== Toast =====
+    function toast(msg, isError) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast show' + (isError ? ' error' : '');
+        setTimeout(() => t.className = 'toast', 2500);
+    }
+
+    // ===== Storage =====
+    function saveSessions() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ sessions, activeSessionId }));
+    }
+    function loadSessions() {
+        try {
+            const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+            if (data && Array.isArray(data.sessions) && data.sessions.length > 0) {
+                sessions = data.sessions;
+                activeSessionId = data.activeSessionId || sessions[0].id;
+            } else {
+                initDefaultSession();
+            }
+        } catch { initDefaultSession(); }
+    }
+    function initDefaultSession() {
+        sessions = [{ id: genId(), title: '默认会话', messages: [] }];
+        activeSessionId = sessions[0].id;
+        saveSessions();
+    }
+    function genId() { return Date.now() + Math.floor(Math.random() * 10000); }
+
+    // ===== Sessions =====
+    function getActive() { return sessions.find(s => s.id === activeSessionId); }
+
+    function renderSessions() {
+        const list = document.getElementById('sessionList');
+        list.innerHTML = '';
+        sessions.forEach(s => {
+            const div = document.createElement('div');
+            div.className = 'session-item' + (s.id === activeSessionId ? ' active' : '');
+            div.innerHTML = `<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(s.title)}</span><button class="del-btn" onclick="event.stopPropagation();deleteSession(${s.id})">✕</button>`;
+            div.onclick = () => switchSession(s.id);
+            list.appendChild(div);
+        });
+    }
+
+    function createSession() {
+        const s = { id: genId(), title: '新对话 ' + (sessions.length + 1), messages: [] };
+        sessions.unshift(s);
+        activeSessionId = s.id;
+        saveSessions();
+        renderSessions();
+        renderMessages();
+        toast('新对话已创建');
+    }
+
+    function switchSession(id) {
+        activeSessionId = id;
+        saveSessions();
+        renderSessions();
+        renderMessages();
+    }
+
+    function deleteSession(id) {
+        if (sessions.length <= 1) { toast('至少保留一个会话', true); return; }
+        sessions = sessions.filter(s => s.id !== id);
+        if (activeSessionId === id) activeSessionId = sessions[0].id;
+        saveSessions();
+        renderSessions();
+        renderMessages();
+        toast('会话已删除');
+    }
+
+    function clearAllSessions() {
+        if (!confirm('确定清空所有会话？')) return;
+        initDefaultSession();
+        renderSessions();
+        renderMessages();
+        toast('已清空所有会话');
+    }
+
+    // ===== Theme =====
+    function getTheme() { return localStorage.getItem('qianyan_theme') || 'dark'; }
+    function setTheme(t) { document.documentElement.setAttribute('data-theme', t); localStorage.setItem('qianyan_theme', t); }
+    function toggleTheme() { setTheme(getTheme() === 'dark' ? 'light' : 'dark'); }
+
+    // ===== Mode =====
+    function toggleMode() {
         streaming = !streaming;
         const btn = document.getElementById('modeBtn');
         btn.textContent = streaming ? '流式' : '同步';
         btn.classList.toggle('active', streaming);
     }
 
-    function addMsg(text, isUser){
-        const m = document.getElementById('messages');
+    // ===== Messages =====
+    function escapeHtml(s) {
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    function renderMessages() {
+        const container = document.getElementById('messages');
+        const session = getActive();
+        if (!session) { container.innerHTML = ''; return; }
+        container.innerHTML = '';
+        if (session.messages.length === 0) {
+            addMsgEl('你好！我是千言 AI 助手，有什么可以帮你的？', false);
+            return;
+        }
+        session.messages.forEach(m => addMsgEl(m.text, m.isUser));
+    }
+
+    function addMsgEl(text, isUser) {
+        const container = document.getElementById('messages');
         const row = document.createElement('div');
         row.className = 'msg-row ' + (isUser ? 'user' : 'ai');
-        row.innerHTML = `<div class="msg-inner"><div class="avatar ${isUser?'user':'ai'}">${isUser?'你':'千'}</div><div class="msg-content">${text}</div></div>`;
-        m.appendChild(row);
-        m.scrollTop = m.scrollHeight;
+        row.innerHTML = `<div class="msg-inner"><div class="avatar ${isUser?'user':'ai'}">${isUser?'你':'千'}</div><div class="msg-content">${escapeHtml(text)}</div></div>`;
+        container.appendChild(row);
+        container.scrollTop = container.scrollHeight;
         return row.querySelector('.msg-content');
     }
 
-    function addRow(isUser){
-        const m = document.getElementById('messages');
+    function addRow(isUser) {
+        const container = document.getElementById('messages');
         const row = document.createElement('div');
         row.className = 'msg-row ' + (isUser ? 'user' : 'ai');
         row.innerHTML = `<div class="msg-inner"><div class="avatar ${isUser?'user':'ai'}">${isUser?'你':'千'}</div><div class="msg-content"></div></div>`;
-        m.appendChild(row);
-        m.scrollTop = m.scrollHeight;
+        container.appendChild(row);
+        container.scrollTop = container.scrollHeight;
         return row.querySelector('.msg-content');
     }
 
-    async function send(){
-        if(sending) return;
+    function pushMsg(text, isUser) {
+        const session = getActive();
+        if (session) {
+            session.messages.push({ text, isUser });
+            // Auto-rename session from first user message
+            if (isUser && session.messages.filter(m => m.isUser).length === 1) {
+                session.title = text.length > 20 ? text.substring(0, 20) + '...' : text;
+                renderSessions();
+            }
+            saveSessions();
+        }
+    }
+
+    // ===== Send =====
+    async function send() {
+        if (sending) return;
         const inp = document.getElementById('input');
         const t = inp.value.trim();
-        if(!t) return;
+        if (!t) return;
 
         sending = true;
-        addMsg(t, true);
+        addMsgEl(t, true);
+        pushMsg(t, true);
         inp.value = '';
         inp.style.height = 'auto';
 
-        if(streaming) await sendStream(t);
+        if (streaming) await sendStream(t);
         else await sendSync(t);
 
         sending = false;
     }
 
-    async function sendSync(t){
+    async function sendSync(t) {
         const content = addRow(false);
         content.textContent = '思考中...';
         try {
             const r = await fetch(API + '/ai/chat', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({memoryId: sid, message: t, userId: uid, sessionId: sid})
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ memoryId: activeSessionId, message: t, userId, sessionId: activeSessionId })
             });
-            if(r.ok){
+            if (r.ok) {
                 const d = await r.json();
-                if(d.code && d.code !== 200){
+                if (d.code && d.code !== 200) {
                     content.textContent = '⚠️ ' + (d.message || '请求处理异常');
+                    pushMsg(content.textContent, false);
                 } else {
-                    content.textContent = d.data || (typeof d === 'string' ? d : JSON.stringify(d));
+                    const reply = d.data || (typeof d === 'string' ? d : JSON.stringify(d));
+                    content.textContent = reply;
+                    pushMsg(reply, false);
                 }
             } else {
                 const err = await r.json().catch(() => null);
-                content.textContent = '⚠️ ' + (err && err.message ? err.message : '请求失败: ' + r.status);
+                const msg = err && err.message ? err.message : '请求失败: ' + r.status;
+                content.textContent = '⚠️ ' + msg;
+                pushMsg(content.textContent, false);
             }
-        } catch(e){
+        } catch (e) {
             content.textContent = '错误: ' + e.message;
+            pushMsg(content.textContent, false);
         }
     }
 
-    async function sendStream(t){
+    async function sendStream(t) {
         const content = addRow(false);
         content.innerHTML = '<span class="typing-dots"><span>●</span><span>●</span><span>●</span></span>';
         let fullText = '';
         try {
             const r = await fetch(API + '/ai/streamChat', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json', 'Accept': 'text/event-stream'},
-                body: JSON.stringify({memoryId: sid, message: t, userId: uid, sessionId: sid})
+                headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+                body: JSON.stringify({ memoryId: activeSessionId, message: t, userId, sessionId: activeSessionId })
             });
-            if(!r.ok){
+            if (!r.ok) {
                 content.textContent = '请求失败: ' + r.status;
+                pushMsg(content.textContent, false);
                 return;
             }
             const reader = r.body.getReader();
             const decoder = new TextDecoder();
             content.textContent = '';
-            while(true){
-                const {done, value} = await reader.read();
-                if(done) break;
-                const chunk = decoder.decode(value, {stream: true});
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value, { stream: true });
                 const lines = chunk.split('\n');
-                for(const line of lines){
-                    if(line.startsWith('data:')){
+                for (const line of lines) {
+                    if (line.startsWith('data:')) {
                         fullText += line.substring(5);
-                    } else if(!line.startsWith('event:') && !line.startsWith('id:') && !line.startsWith(':')){
+                    } else if (!line.startsWith('event:') && !line.startsWith('id:') && !line.startsWith(':')) {
                         fullText += line;
                     }
                 }
                 content.textContent = fullText;
                 document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
             }
-            if(!fullText.trim()) content.textContent = '（AI 未返回内容）';
-        } catch(e){
+            if (!fullText.trim()) {
+                content.textContent = '（AI 未返回内容）';
+            }
+            pushMsg(content.textContent, false);
+        } catch (e) {
             content.textContent = '流式接收错误: ' + e.message;
+            pushMsg(content.textContent, false);
         }
     }
 
-    function newChat(){
-        sid++;
-        document.getElementById('messages').innerHTML = '<div class="msg-row ai"><div class="msg-inner"><div class="avatar ai">千</div><div>新对话已开始！</div></div></div>';
+    // ===== Auto-resize =====
+    function autoResize(el) {
+        el.style.height = 'auto';
+        el.style.height = Math.min(el.scrollHeight, 200) + 'px';
     }
 
+    // ===== Init =====
     document.getElementById('input').addEventListener('keydown', e => {
-        if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); send(); }
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
     });
 
-    // init mode button
+    loadSessions();
+    setTheme(getTheme());
+    renderSessions();
+    renderMessages();
     document.getElementById('modeBtn').textContent = '流式';
     document.getElementById('modeBtn').classList.add('active');
 </script>
