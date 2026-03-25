@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: QianYan
+  profiles:
+    active: dev
+  mail:
+    host: smtp.qq.com
+    port: 587
+    username: your-email@qq.com
+    password: your-smtp-auth-code
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  port: 10010
+  servlet:
+    context-path: /api
+
+logging:
+  level:
+    dev.langchain4j.mcp: ERROR
+
+langchain4j:
+  community:
+    dashscope:
+      chat-model:
+        model-name: qwen-max
+        api-key: your-dashscope-api-key
+      streaming-chat-model:
+        model-name: qwen-max
+        api-key: your-dashscope-api-key
+      embedding-model:
+        model-name: text-embedding-v4
+        api-key: your-dashscope-api-key
+
+bigmodel:
+  api-key: your-bigmodel-api-key
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
