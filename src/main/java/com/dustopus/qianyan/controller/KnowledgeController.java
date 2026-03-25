@@ -9,6 +9,7 @@ import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,6 +20,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 知识库管理控制器
@@ -36,6 +39,28 @@ public class KnowledgeController {
     private String docsPath;
 
     private static final String DEFAULT_FILENAME = "QianYan.md";
+
+    /**
+     * 列出知识库文档
+     */
+    @GetMapping("/list")
+    public BaseResponse<List<String>> listDocuments() {
+        try {
+            Path dirPath = Paths.get(docsPath);
+            if (!Files.exists(dirPath)) {
+                return ResultUtils.success(List.of());
+            }
+            List<String> files = Files.list(dirPath)
+                    .filter(p -> p.toString().endsWith(".md"))
+                    .map(p -> p.getFileName().toString())
+                    .sorted()
+                    .collect(Collectors.toList());
+            return ResultUtils.success(files);
+        } catch (IOException e) {
+            log.error("列出文档失败", e);
+            return ResultUtils.error(50001, "列出文档失败: " + e.getMessage());
+        }
+    }
 
     /**
      * 插入知识点（同时写入文件和向量库）
