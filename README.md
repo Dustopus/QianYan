@@ -5,7 +5,7 @@
 ![Java](https://img.shields.io/badge/Java-17-orange.svg)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.9-brightgreen.svg)
 ![LangChain4j](https://img.shields.io/badge/LangChain4j-1.1.0-blue.svg)
-![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+![License](https://img.shields.io/badge/License-AGPL--3.0-yellow.svg)
 
 **一个基于 Java + LangChain4j 构建的企业级智能体系统**
 
@@ -264,7 +264,7 @@ QianYan/
 
 ## 📄 许可证
 
-[MIT License](LICENSE)
+[AGPL-3.0 License](LICENSE)
 
 ---
 
