@@ -2,11 +2,13 @@ package com.dustopus.qianyan.tool;
 
 import dev.langchain4j.agent.tool.Tool;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 /**
  * 天气查询工具
  * 通过 Function Calling 为 AI Agent 提供天气查询能力
  */
+@Component
 @Slf4j
 public class WeatherTool {
 
