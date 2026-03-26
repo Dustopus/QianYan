@@ -447,7 +447,7 @@
         resultDiv.style.color = 'var(--text-secondary)';
 
         try {
-            const res = await fetch(API_BASE + '/insert', {
+            const res = await fetch(API_BASE + '/knowledge/insert', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ question, answer, sourceName })
