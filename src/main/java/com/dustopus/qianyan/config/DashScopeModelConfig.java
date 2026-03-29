@@ -7,6 +7,7 @@ import dev.langchain4j.community.model.dashscope.QwenChatModel;
 import dev.langchain4j.community.model.dashscope.QwenStreamingChatModel;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -24,6 +25,17 @@ public class DashScopeModelConfig {
 
     @Resource
     private AiModelMonitorListener aiModelMonitorListener;
+
+    @Resource
+    private ApiKeyProvider apiKeyProvider;
+
+    /**
+     * 启动时注册默认 API Key 到 ApiKeyProvider
+     */
+    @PostConstruct
+    public void initApiKeyProvider() {
+        apiKeyProvider.setDefaultKey(apiKey);
+    }
 
     @Bean
     @Primary
