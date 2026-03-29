@@ -3,6 +3,7 @@ package com.dustopus.qianyan.controller;
 import com.dustopus.qianyan.Monitor.MonitorContext;
 import com.dustopus.qianyan.Monitor.MonitorContextHolder;
 import com.dustopus.qianyan.agent.Agent;
+import com.dustopus.qianyan.agent.AgentFactory;
 import com.dustopus.qianyan.common.BaseResponse;
 import com.dustopus.qianyan.common.ResultUtils;
 import com.dustopus.qianyan.model.chat.ChatRequest;
@@ -26,7 +27,7 @@ import reactor.core.publisher.Flux;
 public class StreamFluxChatController {
 
     @Resource
-    private Agent agent;
+    private AgentFactory agentFactory;
 
     /**
      * 流式聊天接口（SSE）
@@ -52,6 +53,7 @@ public class StreamFluxChatController {
 
         return Flux.defer(() -> {
             MonitorContextHolder.setContext(context);
+            Agent agent = agentFactory.getAgent();
             return agent.streamChat(memoryId, message)
                     .doFinally(signal -> MonitorContextHolder.clearContext());
         });
@@ -81,6 +83,7 @@ public class StreamFluxChatController {
 
         MonitorContextHolder.setContext(context);
         try {
+            Agent agent = agentFactory.getAgent();
             String reply = agent.chat(memoryId, message);
             return ResultUtils.success(reply);
         } catch (Exception e) {
